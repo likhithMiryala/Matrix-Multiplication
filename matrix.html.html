@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Matrix multiplication</title>
+    <style>
+        .cross{
+            margin-left: 400px;
+            margin-top:300px;
+        }
+    </style>
+
+    <script src="https://d3js.org/d3.v5.js"></script>
+</head>
+
+<body>
+
+    n: <input min=1 max=15 value=2 type="range" id="slidern">
+    m: <input min=1 max=15 value=3 type="range" id="sliderm">
+    p: <input min=1 max=15 value=2 type="range" id="sliderp">
+    <br>
+    <br>
+    <script>
+        var width = 1200, height = 400, counter = 0, B_ids = [], A_ids = [], interval;
+        svg = d3.select("body")
+            .append("svg")
+            .attr("width", width + 40)
+            .attr("height", height + 40)
+            .style("background", "lightyellow");
+        svg.append("text").attr("x", 400).attr("y", 150).attr("fill", "red").attr("font-size", "20px").text("X");
+        svg.append("text").attr("x", 820).attr("y", 150).attr("fill", "red").attr("font-size", "20px").text("=");
+
+        d3.select("#slidern").on("input", function () {
+            if (interval != undefined) { interval.stop(); }
+            let m = d3.select("#sliderm").property("value");
+            let p = d3.select("#sliderp").property("value");
+            let n = this.value;
+            adata = calculate_matrix_location(n, m, "circleA", 0, "A");
+            cdata = calculate_matrix_location(n, p, "circleC", 830, "C");
+        })
+        d3.select("#sliderm").on("input", function () {
+            if (interval != undefined) { interval.stop(); }
+            let n = d3.select("#slidern").property("value");
+            let p = d3.select("#sliderp").property("value");
+            let m = this.value;
+            adata = calculate_matrix_location(n, m, "circleA", 0, "A");
+            bdata = calculate_matrix_location(m, p, "circleB", 430, "B");
+        })
+        d3.select("#sliderp").on("input", function () {
+            if (interval != undefined) { interval.stop(); }
+            let n = d3.select("#slidern").property("value");
+            let m = d3.select("#sliderm").property("value");
+            let p = this.value;
+            bdata = calculate_matrix_location(m, p, "circleB", 430, "B");
+            cdata = calculate_matrix_location(n, p, "circleC", 830, "C");
+        })
+
+        let n = d3.select("#slidern").property("value");
+        let m = d3.select("#sliderm").property("value");
+        let p = d3.select("#sliderp").property("value");
+        adata = calculate_matrix_location(n, m, "circleA", 0, "A");
+        bdata = calculate_matrix_location(m, p, "circleB", 430, "B");
+        cdata = calculate_matrix_location(n, p, "circleC", 830, "C");
+
+        // This is the function where you draw your matrices
+        function calculate_matrix_location(size_1, size_2, circle_value, width_offset, matrix) {
+
+            // populate cx and cy for your circles  ----> data
+            // join the data with circles
+            // invoke the generic case (update enter and exit selection)
+            let mydata = [];
+            count = 0;
+            for (i = 0; i < size_2; i++) {
+                for (j = 0; j < size_1; j++) {
+                    let point = {};
+                    point.cx = ((width / 3) / size_2) * (i) + width_offset + 10;
+                    point.cy = ((height) / size_1) * (j) + 10;
+                    index = i * size_2 + j;
+                    mydata[count] = point;
+                    count++;
+                }
+            }
+            circle = svg.selectAll("." + circle_value).data(mydata);
+            circle.exit().remove();
+            circle.enter().append("circle").merge(circle)
+                .attr("cx", function (d, i) {
+                    return d.cx;
+                })
+                .attr("cy", function (d, i) {
+                    return d.cy;
+                })
+                .attr("r", 4)
+                .attr("fill", "black")
+                .attr("id", function (d, i) {
+                    console.log("id_" +""+ matrix+ "" + i);
+                    return "id_" + matrix + i;
+                    
+                })
+                .attr("class", circle_value);
+            return mydata;
+        }
+
+        function step() {
+            let n = d3.select("#slidern").property("value");
+            let m = d3.select("#sliderm").property("value");
+            let p = d3.select("#sliderp").property("value");
+            A_ids = [];
+            if (counter % n == 0) {
+                B_ids = [];
+                for (j = 0; j < m; j++) {
+                    B_ids.push("#id_B" + (((counter / n) * m) + j));
+                }
+            }
+            for (i = 0; i < m; i++) {
+
+                A_ids.push("#id_A" + (((n * i) + (counter % n))));
+            }
+            fewcircle = svg.selectAll(A_ids.join() + "," + "#id_C" + counter + "," + B_ids.join()).attr("fill", "red").attr("r", 8)
+                .transition()
+                .duration(900)
+                .attr("r", 4)
+                .attr("fill", "black");
+        }
+        function play() {
+            counter = 0;
+            interval = d3.interval(function () {
+                steps = cdata.length;
+                if (counter < steps) {
+                    step();
+                }
+                else {
+                    counter = 0;
+                    step();
+                }
+                counter++;
+            }, 1500);
+        }
+        d3.select("body").append("br")
+        d3.select("body").append("button").text("Step").on("click", function () {
+            if (interval != undefined) { interval.stop();}
+            steps = cdata.length;
+            if (counter < steps) {
+                step();
+            }
+            else {
+                counter = 0;
+                step();
+            }
+            counter++;
+        });
+        d3.select("body").append("button").text("Play").on("click", play);
+    </script>
+</body>
+</html>
